@@ -3,8 +3,14 @@ name: Docker CD
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Docker image version (e.g. v1.0.4)"
+        required: true
+        type: string
 
 jobs:
   docker-publish:
@@ -12,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      IMAGE_VERSION: ${{ github.ref_name }}
+      IMAGE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout application repository
         uses: actions/checkout@v6
 
       - name: Set up Docker Buildx
@@ -46,3 +52,47 @@ jobs:
           tags: |
             yazeeth/onlineshop-frontend:${{ env.IMAGE_VERSION }}
             yazeeth/onlineshop-frontend:latest
+
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v6
+        with:
+          repository: yazeeth/online-shop-gitops
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+
+      - name: Update GitOps image versions
+        working-directory: gitops
+        run: |
+          sed -i "s#yazeeth/onlineshop-backend:v[0-9]*\.[0-9]*\.[0-9]*#yazeeth/onlineshop-backend:${IMAGE_VERSION}#g" \
+            apps/online-shop/base/backend-deployment.yaml
+
+          sed -i "s#yazeeth/onlineshop-backend:v[0-9]*\.[0-9]*\.[0-9]*#yazeeth/onlineshop-backend:${IMAGE_VERSION}#g" \
+            apps/online-shop/base/backend-migration-job.yaml
+
+          sed -i "s#yazeeth/onlineshop-frontend:v[0-9]*\.[0-9]*\.[0-9]*#yazeeth/onlineshop-frontend:${IMAGE_VERSION}#g" \
+            apps/online-shop/base/frontend-deployment.yaml
+
+      - name: Verify GitOps image versions
+        working-directory: gitops
+        run: |
+          echo "Image version: ${IMAGE_VERSION}"
+          grep -R "image:" apps/online-shop/base
+
+      - name: Commit and push GitOps changes
+        working-directory: gitops
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            apps/online-shop/base/backend-deployment.yaml \
+            apps/online-shop/base/backend-migration-job.yaml \
+            apps/online-shop/base/frontend-deployment.yaml
+
+          if git diff --cached --quiet; then
+            echo "No GitOps image changes detected."
+            exit 0
+          fi
+
+          git commit -m "update online-shop images to ${IMAGE_VERSION}"
+          git push origin main
