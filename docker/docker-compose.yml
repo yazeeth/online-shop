@@ -1,4 +1,5 @@
 services:
+  # PostgreSQL database
   postgres:
     image: postgres:17
     container_name: onlineshop-postgres
@@ -13,6 +14,7 @@ services:
       - "5432:5432"
 
     volumes:
+      # Persistent PostgreSQL data
       - onlineshop-postgres-data:/var/lib/postgresql/data
 
     healthcheck:
@@ -21,11 +23,39 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
+    networks:
+      - onlineshop-network
+
+  # Run Prisma database migrations before the local backend starts
+  # Uses the locally built backend image
+  migration:
     build:
       context: ../backend
       dockerfile: Dockerfile
+    image: onlineshop-backend:dev
+    container_name: onlineshop-migration
+    restart: "no"
 
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+
+    command: npx prisma migrate deploy
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - onlineshop-network
+
+  # Build backend image locally from source
+  backend:
+    # Local image build
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    # Locally built image tag
     image: onlineshop-backend:dev
     container_name: onlineshop-backend
 
@@ -42,15 +72,24 @@ services:
     ports:
       - "5050:5050"
 
-    depends_on:
-      postgres:
-        condition: service_healthy
+    volumes:
+      # Persistent product image uploads
+      - onlineshop-backend-uploads:/app/uploads
 
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+
+    networks:
+      - onlineshop-network
+
+  # Build frontend image locally from source
   frontend:
+    # Local image build
     build:
       context: ../frontend
       dockerfile: Dockerfile
-
+    # Locally built image tag
     image: onlineshop-frontend:dev
     container_name: onlineshop-frontend
 
@@ -63,7 +102,18 @@ services:
       - "5173:5173"
 
     depends_on:
-      - backend
+      backend:
+        condition: service_started
 
+    networks:
+      - onlineshop-network
+
+# Named volumes survive container recreation
 volumes:
   onlineshop-postgres-data:
+  onlineshop-backend-uploads:
+
+# Dedicated application network
+networks:
+  onlineshop-network:
+    driver: bridge

@@ -1,4 +1,5 @@
 services:
+  # PostgreSQL database image
   postgres:
     image: postgres:17
     container_name: onlineshop-postgres
@@ -21,7 +22,30 @@ services:
       timeout: 5s
       retries: 5
 
+    networks:
+      - onlineshop-network
+  # Run Prisma database migrations before the backend starts
+  # Uses the same production backend image pulled from Docker Hub
+  migration:
+    image: yazeeth/onlineshop-backend:${BACKEND_VERSION}
+    container_name: onlineshop-migration
+    restart: "no"
+
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+
+    command: npx prisma migrate deploy
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - onlineshop-network
+  # Production backend image pulled from Docker Hub
   backend:
+    # Pull backend image from Docker Hub
     image: yazeeth/onlineshop-backend:${BACKEND_VERSION}
     container_name: onlineshop-backend
     restart: unless-stopped
@@ -37,11 +61,18 @@ services:
     ports:
       - "5050:5050"
 
-    depends_on:
-      postgres:
-        condition: service_healthy
+    volumes:
+      - onlineshop-backend-uploads:/app/uploads
 
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+
+    networks:
+      - onlineshop-network
+  # Production frontend image pulled from Docker Hub
   frontend:
+    # Pull frontend image from Docker Hub
     image: yazeeth/onlineshop-frontend:${FRONTEND_VERSION}
     container_name: onlineshop-frontend
     restart: unless-stopped
@@ -53,7 +84,24 @@ services:
       - "5173:5173"
 
     depends_on:
-      - backend
+      backend:
+        condition: service_started
 
+    networks:
+      - onlineshop-network
+
+# Named volumes persist data across container recreation
 volumes:
   onlineshop-postgres-data:
+  onlineshop-backend-uploads:
+
+# Dedicated application network
+networks:
+  onlineshop-network:
+    driver: bridge
+
+# Start production containers using images from Docker Hub.
+# The migration service runs `npx prisma migrate deploy` after PostgreSQL is healthy.
+# Backend starts only after the migration service completes successfully.
+# Run this command from the docker directory in terminal:
+# docker compose -f docker-compose.prod.yml --env-file .env up -d
