@@ -41,7 +41,7 @@ export default function Header() {
             className="shrink-0 text-xl font-black tracking-tight text-brand-600 transition hover:text-brand-700 sm:text-2xl"
             aria-label="OnlineShop home"
           >
-            OnlineShop
+            OnlineShop - Yazeeth
           </Link>
 
           <nav className="hidden items-center gap-7 md:flex" aria-label="Primary navigation">
