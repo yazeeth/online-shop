@@ -9,7 +9,6 @@
   --color-brand-700: #0f172a;
   --color-brand-800: #0b132b;
   --color-brand-900: #020617;
-
   --color-success-500: #16a34a;
   --color-warning-500: #f59e0b;
   --color-danger-500: #dc2626;
@@ -242,6 +241,29 @@ a {
 .border-rose-600:hover {
   background-color: #fef2f2 !important;
   color: #b91c1c !important;
+}
+
+/* Category table delete action */
+button.category-delete-button {
+  color: #dc2626 !important;
+  background-color: var(--surface) !important;
+  border-color: #fca5a5 !important;
+}
+
+button.category-delete-button:hover,
+button.category-delete-button:focus,
+button.category-delete-button:active {
+  color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+}
+
+button.category-delete-button span,
+button.category-delete-button:hover span,
+button.category-delete-button:focus span,
+button.category-delete-button:active span {
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
 }
 
 /* Common interactive controls */

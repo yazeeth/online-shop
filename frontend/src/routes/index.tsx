@@ -18,6 +18,7 @@ import AdminDashboard from "../pages/admin/Dashboard.tsx";
 import OrdersManagement from "../pages/admin/OrdersManagement";
 import PaymentsManagement from "../pages/admin/PaymentsManagement";
 import ProductsManagement from "../pages/admin/ProductsManagement";
+import CategoriesManagement from "../pages/admin/CategoriesManagement";
 import UsersManagement from "../pages/admin/UsersManagement";
 import type { ReactNode } from "react";
 
@@ -118,6 +119,10 @@ const router = createBrowserRouter([
           {
             path: "products",
             element: <ProductsManagement />,
+          },
+          {
+            path: "categories",
+            element: <CategoriesManagement />,
           },
           {
             path: "orders",

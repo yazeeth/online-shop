@@ -2,7 +2,8 @@ import { Router } from "express";
 
 import {
     addCategory,
-    getAllCategories
+    getAllCategories,
+    removeCategory
 } from "../controllers/category.controller";
 
 import { authMiddleware } from "../middleware/auth.middleware";
@@ -67,6 +68,13 @@ router.post(
  *         description: List of categories
  */
 router.get("/", getAllCategories);
+
+router.delete(
+    "/:id",
+    authMiddleware,
+    requireAdmin,
+    removeCategory
+);
 
 
 export default router;

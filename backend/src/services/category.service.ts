@@ -55,3 +55,38 @@ export const getCategoryById = async (
     return category;
 
 };
+
+export const deleteCategory = async (
+    id: number
+) => {
+
+    const category = await prisma.category.findUnique({
+        where: {
+            id
+        },
+        include: {
+            products: {
+                where: {
+                    active: true
+                },
+                select: {
+                    id: true
+                }
+            }
+        }
+    });
+
+    if (!category) {
+        throw new Error("Category not found");
+    }
+
+    if (category.products.length > 0) {
+        throw new Error("Cannot delete category because it has active products");
+    }
+
+    return await prisma.category.delete({
+        where: {
+            id
+        }
+    });
+};

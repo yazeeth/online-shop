@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 
 import {
     createCategory,
-    getCategories
+    getCategories,
+    deleteCategory
 } from "../services/category.service";
 
 
@@ -56,6 +57,44 @@ export const getAllCategories = async (
     } catch(error:any){
 
         res.status(400).json({
+            message: error.message
+        });
+
+    }
+
+};
+
+export const removeCategory = async (
+    req: Request,
+    res: Response
+) => {
+
+    try {
+
+        const id = Number(req.params.id);
+
+        if (Number.isNaN(id)) {
+            return res.status(400).json({
+                message: "Invalid category ID"
+            });
+        }
+
+        const category = await deleteCategory(id);
+
+        res.json({
+            message: "Category deleted successfully",
+            category
+        });
+
+    } catch(error:any){
+
+        const statusCode = error.message === "Category not found"
+            ? 404
+            : error.message === "Cannot delete category because it has active products"
+                ? 409
+                : 400;
+
+        res.status(statusCode).json({
             message: error.message
         });
 

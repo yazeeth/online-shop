@@ -423,6 +423,7 @@ return (
             <div className="grid gap-3 p-6 sm:grid-cols-2">
               {[
                 ["Products", "Manage your catalog", "/admin/products"],
+                ["Categories", "Manage product categories", "/admin/categories"],
                 ["Orders", "Review customer orders", "/admin/orders"],
                 ["Users", "Manage customers and roles", "/admin/users"],
                 ["Payments", "Review payment activity", "/admin/payments"],
