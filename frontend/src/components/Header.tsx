@@ -58,7 +58,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {!isAdmin && (
+          {user && !isAdmin && (
             <Link
               to="/cart"
               className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-gray-700 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
@@ -218,7 +218,7 @@ export default function Header() {
             <NavLink to="/products" onClick={closeMobile} className={navLinkClass}>
               <span className="block rounded-xl px-3 py-3">Products</span>
             </NavLink>
-            {!isAdmin && (
+            {user && !isAdmin && (
               <Link
                 to="/cart"
                 onClick={closeMobile}
