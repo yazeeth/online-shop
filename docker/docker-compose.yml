@@ -83,6 +83,28 @@ services:
     networks:
       - onlineshop-network
 
+  # Prisma Studio for local database management
+  prisma-studio:
+    image: onlineshop-backend:dev
+    container_name: onlineshop-prisma-studio
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+
+    command: npx prisma studio --port 5555 --browser none
+
+    ports:
+      - "5555:5555"
+
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+
+    networks:
+      - onlineshop-network
+
   # Build frontend image locally from source
   frontend:
     # Local image build
